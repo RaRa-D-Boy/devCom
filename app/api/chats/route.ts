@@ -69,13 +69,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if other user exists
-    const { data: otherUser, error: userError } = await supabase
+    const { data: targetUser, error: userError } = await supabase
       .from("profiles")
       .select("id")
       .eq("id", other_user_id)
       .single()
 
-    if (userError || !otherUser) {
+    if (userError || !targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
