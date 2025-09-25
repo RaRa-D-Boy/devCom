@@ -15,53 +15,10 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-
-interface Profile {
-  id: string
-  username: string
-  full_name?: string
-  first_name?: string
-  last_name?: string
-  display_name?: string
-  avatar_url?: string
-  cover_image_url?: string
-  bio?: string
-  status?: 'active' | 'busy' | 'offline' | 'inactive'
-  location?: string
-  website?: string
-  github_url?: string
-  linkedin_url?: string
-  twitter_url?: string
-  portfolio_url?: string
-  role?: string
-  company?: string
-  job_title?: string
-  skills?: string[]
-  programming_languages?: string[]
-  frameworks?: string[]
-  tools?: string[]
-  experience_level?: 'junior' | 'mid' | 'senior' | 'lead' | 'architect'
-  years_of_experience?: number
-  education?: string
-  certifications?: string[]
-  projects?: string[]
-  achievements?: string[]
-  interests?: string[]
-  timezone?: string
-  availability?: 'available' | 'busy' | 'unavailable'
-  looking_for_work?: boolean
-  remote_work?: boolean
-  profile_visibility?: 'public' | 'friends' | 'private'
-  last_seen?: string
-  profile_completed?: boolean
-  theme_preference?: 'light' | 'dark' | 'auto'
-  notification_preferences?: any
-  social_links?: any
-  contact_info?: any
-  professional_info?: any
-  created_at: string
-  updated_at?: string
-}
+import { useUnreadCount } from "@/hooks/use-unread-count"
+import { Profile } from "../messages/types"
+import { useProfile } from "@/contexts/profile-context"
+import { useTheme } from "@/contexts/theme-context"
 
 interface AppLayoutProps {
   user: User
@@ -73,6 +30,21 @@ interface AppLayoutProps {
 export function AppLayout({ user, profile, children, activePage = 'home' }: AppLayoutProps) {
   const supabase = createClient()
   const router = useRouter()
+  const { unreadCount } = useUnreadCount(user.id)
+  const { backgroundImage } = useProfile()
+  const { glassEffect, colorPalette, theme } = useTheme()
+
+  // Check if theme is dark
+  const isDarkTheme = theme === 'dark'
+  
+  // Log appearance settings
+  console.log('Appearance Settings:', {
+    theme,
+    isDarkTheme,
+    colorPalette,
+    glassEffect,
+    backgroundImage
+  })
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -80,16 +52,32 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
   }
 
   const getButtonClass = (page: string) => {
-    const baseClass = "w-12 h-12 text-black hover:bg-gray-100"
+    const baseClass = "w-12 h-12 transition-all"
     return activePage === page 
-      ? `${baseClass} bg-black text-white rounded-full` 
-      : baseClass
+      ? `${baseClass} bg-primary text-primary-foreground rounded-full` 
+      : `${baseClass} text-foreground hover:bg-accent`
   }
 
   return (
-    <div className="h-screen dev-background relative overflow-hidden p-0 lg:p-4">
+    <div 
+      className={`h-screen relative overflow-hidden p-0 lg:p-4 ${isDarkTheme ? 'dark' : ''}`}
+      style={{
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/dev.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       <div className="lg:container mx-auto h-full">
-        <div className="bg-white/90 lg:rounded-2xl h-full relative">
+        <div className={`lg:rounded-2xl h-full relative ${
+          isDarkTheme 
+            ? glassEffect === 'translucent' ? 'glass-dark' :
+              glassEffect === 'transparent' ? 'bg-black/20 backdrop-blur-sm border border-gray-700/30' :
+              'bg-card backdrop-blur-none border-border'
+            : glassEffect === 'translucent' ? 'bg-white/30 backdrop-blur-md border border-white/20' :
+              glassEffect === 'transparent' ? 'bg-white/10 backdrop-blur-sm border border-white/10' :
+              'bg-white/90 backdrop-blur-none border border-gray-200'
+        }`}>
           <div className="flex h-full">
             
             {/* Sidebar Navigation - Desktop */}
@@ -103,7 +91,7 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
                       className={getButtonClass('home')}
                       onClick={() => router.push('/home')}
                     >
-                      <Home className={`h-5 w-5 ${activePage === 'home' ? 'text-white' : 'text-black'}`} />
+                      <Home className={`h-5 w-5 ${activePage === 'home' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -116,14 +104,19 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className={getButtonClass('messages')}
+                      className={`${getButtonClass('messages')} relative`}
                       onClick={() => router.push('/messages')}
                     >
-                      <MessageCircle className={`h-5 w-5 ${activePage === 'messages' ? 'text-white' : 'text-black'}`} />
+                      <MessageCircle className={`h-5 w-5 ${activePage === 'messages' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Messages</p>
+                    <p>Messages {unreadCount > 0 && `(${unreadCount} unread)`}</p>
                   </TooltipContent>
                 </Tooltip>
                 
@@ -135,7 +128,7 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
                       className={getButtonClass('groups')}
                       onClick={() => router.push('/groups')}
                     >
-                      <Users className={`h-5 w-5 ${activePage === 'groups' ? 'text-white' : 'text-black'}`} />
+                      <Users className={`h-5 w-5 ${activePage === 'groups' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -151,7 +144,7 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
                       className={getButtonClass('activity')}
                       onClick={() => router.push('/activity')}
                     >
-                      <Bell className={`h-5 w-5 ${activePage === 'activity' ? 'text-white' : 'text-black'}`} />
+                      <Bell className={`h-5 w-5 ${activePage === 'activity' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -167,7 +160,7 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
                       className={getButtonClass('settings')}
                       onClick={() => router.push('/settings')}
                     >
-                      <Settings className={`h-5 w-5 ${activePage === 'settings' ? 'text-white' : 'text-black'}`} />
+                      <Settings className={`h-5 w-5 ${activePage === 'settings' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -177,10 +170,13 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
                 
                 <div className="flex-1"></div>
                 
+                {/* Theme Status Indicator */}
+              
+                
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" onClick={handleSignOut} className="w-12 h-12 text-black hover:bg-gray-100">
-                      <LogOut className="h-5 w-5 text-black" />
+                    <Button variant="ghost" size="sm" onClick={handleSignOut} className={`w-12 h-12 ${isDarkTheme ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-100'}`}>
+                      <LogOut className={`h-5 w-5 ${isDarkTheme ? 'text-white' : 'text-black'}`} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -200,33 +196,40 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
 
       {/* Bottom Navigation - Mobile */}
       <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-white/50 backdrop-blur-2xl rounded-2xl p-4 z-50 m-4">
+        {/* Theme Status for Mobile */}
+        
         <div className="flex justify-around items-center">
           <Button 
             variant="ghost" 
             size="sm" 
             className={`flex flex-col items-center text-xs px-3 py-2 rounded-full transition-all ${
               activePage === 'home' 
-                ? 'bg-black text-white' 
-                : 'text-black hover:bg-gray-100'
+                ? `bg-primary text-primary-foreground` 
+                : isDarkTheme ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-100'
             }`}
             onClick={() => router.push('/home')}
           >
-            <Home className="h-5 w-5" />
-            <span className="mt-1 hidden md:block">Home</span>
+            <Home className={`h-5 w-5 ${activePage === 'home' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`}/>
+            <span className="mt-1 hidden lg:block">Home</span>
           </Button>
           
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`flex flex-col items-center text-xs px-3 py-2 rounded-full transition-all ${
+            className={`flex flex-col items-center text-xs px-3 py-2 rounded-full transition-all relative ${
               activePage === 'messages' 
-                ? 'bg-black text-white' 
-                : 'text-black hover:bg-gray-100'
+                ? `bg-primary text-primary-foreground` 
+                : isDarkTheme ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-100'
             }`}
             onClick={() => router.push('/messages')}
           >
-            <MessageCircle className="h-5 w-5" />
-            <span className="mt-1 hidden md:block">Messages</span>
+            <MessageCircle className={`h-5 w-5 ${activePage === 'messages' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+            <span className="mt-1 hidden lg:block">Messages</span>
           </Button>
           
           <Button 
@@ -234,13 +237,13 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
             size="sm" 
             className={`flex flex-col items-center text-xs px-3 py-2 rounded-full transition-all ${
               activePage === 'groups' 
-                ? 'bg-black text-white' 
-                : 'text-black hover:bg-gray-100'
+                ? `bg-primary text-primary-foreground` 
+                : isDarkTheme ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-100'
             }`}
             onClick={() => router.push('/groups')}
           >
-            <Users className="h-5 w-5" />
-            <span className="mt-1 hidden md:block">Groups</span>
+            <Users className={`h-5 w-5 ${activePage === 'groups' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
+            <span className="mt-1 hidden lg:block">Groups</span>
           </Button>
           
           <Button 
@@ -248,13 +251,13 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
             size="sm" 
             className={`flex flex-col items-center text-xs px-3 py-2 rounded-full transition-all ${
               activePage === 'activity' 
-                ? 'bg-black text-white' 
-                : 'text-black hover:bg-gray-100'
+                ? `bg-primary text-primary-foreground` 
+                : isDarkTheme ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-100'
             }`}
             onClick={() => router.push('/activity')}
           >
-            <Bell className="h-5 w-5" />
-            <span className="mt-1 hidden md:block">Activity</span>
+            <Bell className={`h-5 w-5 ${activePage === 'activity' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
+            <span className="mt-1 hidden lg:block">Activity</span>
           </Button>
           
           <Button 
@@ -262,13 +265,13 @@ export function AppLayout({ user, profile, children, activePage = 'home' }: AppL
             size="sm" 
             className={`flex flex-col items-center text-xs px-3 py-2 rounded-full transition-all ${
               activePage === 'settings' 
-                ? 'bg-black text-white' 
-                : 'text-black hover:bg-gray-100'
+                ? `bg-primary text-primary-foreground` 
+                : isDarkTheme ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-100'
             }`}
             onClick={() => router.push('/settings')}
           >
-            <Settings className="h-5 w-5" />
-            <span className="mt-1 hidden md:block">Settings</span>
+            <Settings className={`h-5 w-5 ${activePage === 'settings' ? 'text-primary-foreground' : isDarkTheme ? 'text-white' : 'text-black'}`} />
+            <span className="mt-1 hidden lg:block">Settings</span>
           </Button>
         </div>
       </div>

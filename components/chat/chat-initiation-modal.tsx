@@ -154,49 +154,6 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
       <DialogContent className="max-w-md h-[600px] p-0 overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 border-0">
         {/* Header */}
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-              <MessageCircle className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700">Chat with</p>
-              <p className="text-xs text-gray-500">Start conversation</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-8 h-8 p-0 text-gray-600 hover:bg-white/50"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="w-8 h-8 p-0 text-gray-600 hover:bg-white/50"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col px-6 pb-6">
-          {/* Greeting Section - Only show if no messages */}
-          {messages.length === 0 && !loading && (
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent mb-2">
-                Hello {otherUser.full_name || otherUser.display_name || otherUser.username}
-              </h1>
-              <p className="text-gray-700 text-lg font-medium">
-                How can I help you today?
-              </p>
-            </div>
-          )}
-
           {/* User Info Card - Compact version when messages exist */}
           <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 mb-4 border border-white/50">
             <div className="flex items-center space-x-3">
@@ -220,6 +177,25 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
               }`}></div>
             </div>
           </div>
+          
+         
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col px-6 pb-6">
+          {/* Greeting Section - Only show if no messages */}
+          {messages.length === 0 && !loading && (
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent mb-2">
+                Hello {otherUser.full_name || otherUser.display_name || otherUser.username}
+              </h1>
+              <p className="text-gray-700 text-lg font-medium">
+                How can I help you today?
+              </p>
+            </div>
+          )}
+
+          
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto space-y-3 mb-4 min-h-[200px]">

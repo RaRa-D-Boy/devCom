@@ -11,6 +11,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { useTheme } from "@/contexts/theme-context"
 
 interface GroupsListProps {
   user: User
@@ -21,6 +22,8 @@ export function GroupsList({ user }: GroupsListProps) {
   const [isJoiningGroup, setIsJoiningGroup] = useState(false)
   const supabase = createClient()
   const router = useRouter()
+  const { theme, glassEffect } = useTheme()
+  const isDarkTheme = theme === 'dark'
 
   useEffect(() => {
     loadGroups()
@@ -79,31 +82,43 @@ export function GroupsList({ user }: GroupsListProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-4">
+    <div className={`rounded-2xl p-4 ${
+      isDarkTheme 
+        ? glassEffect === 'translucent' ? 'bg-neutral-900/70 backdrop-blur-sm border border-gray-700/30' :
+          glassEffect === 'transparent' ? 'bg-transparent' :
+          'bg-neutral-900 border border-gray-700'
+        : glassEffect === 'translucent' ? 'bg-white/80 backdrop-blur-sm border border-white/20' :
+          glassEffect === 'transparent' ? 'bg-transparent' :
+          'bg-white border border-gray-200'
+    }`}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-lg text-black">All Groups</h3>
-        <span className="text-sm text-white/60">{groups.length}</span>
+        <h3 className={`font-semibold text-lg ${isDarkTheme ? 'text-white' : 'text-black'}`}>All Groups</h3>
+        <span className={`text-sm ${isDarkTheme ? 'text-white/60' : 'text-black/60'}`}>{groups.length}</span>
       </div>
       <div className="space-y-2 max-h-[500px] overflow-y-auto">
         {groups.map((group) => (
-          <div key={group.id} className="flex items-center space-x-2 p-3 border border-gray-200 rounded-2xl hover:bg-gray-50 shadow-sm hover:shadow-md transition-all">
+          <div key={group.id} className={`flex items-center space-x-2 p-3 border rounded-2xl shadow-sm hover:shadow-md transition-all ${
+            isDarkTheme 
+              ? 'border-gray-600 hover:bg-gray-700' 
+              : 'border-gray-200 hover:bg-gray-50'
+          }`}>
             <div className="relative">
-              <Avatar className="h-10 w-10 ring-2 ring-gray-200">
+              <Avatar className={`h-10 w-10 ring-2 ${isDarkTheme ? 'ring-gray-600' : 'ring-gray-200'}`}>
                 <AvatarFallback className="bg-neutral-700 text-white text-sm">
                   {group.name?.[0] || 'G'}
                 </AvatarFallback>
               </Avatar>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-black">
+              <p className={`text-sm font-medium truncate ${isDarkTheme ? 'text-white' : 'text-black'}`}>
                 {group.name}
               </p>
               <div className="flex items-center space-x-1">
-                <p className="text-xs text-gray-500 truncate">{group.members_count} members</p>
+                <p className={`text-xs truncate ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>{group.members_count} members</p>
                 {group.creator && (
                   <>
-                    <span className="text-gray-300">•</span>
-                    <p className="text-xs text-gray-500 truncate">by {group.creator.username}</p>
+                    <span className={isDarkTheme ? 'text-gray-500' : 'text-gray-300'}>•</span>
+                    <p className={`text-xs truncate ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>by {group.creator.username}</p>
                   </>
                 )}
               </div>
@@ -115,7 +130,7 @@ export function GroupsList({ user }: GroupsListProps) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-gray-600 hover:text-white hover:bg-black"
+                      className={`h-8 w-8 p-0 ${isDarkTheme ? 'text-gray-300 hover:text-white hover:bg-gray-600' : 'text-gray-600 hover:text-white hover:bg-black'}`}
                       onClick={() => handleViewGroup(group)}
                     >
                       <Eye className="h-4 w-4" />
@@ -131,7 +146,7 @@ export function GroupsList({ user }: GroupsListProps) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-gray-600 hover:text-white hover:bg-black"
+                      className={`h-8 w-8 p-0 ${isDarkTheme ? 'text-gray-300 hover:text-white hover:bg-gray-600' : 'text-gray-600 hover:text-white hover:bg-black'}`}
                       onClick={() => handleJoinGroup(group)}
                       disabled={isJoiningGroup}
                     >
@@ -148,7 +163,7 @@ export function GroupsList({ user }: GroupsListProps) {
         ))}
         {groups.length === 0 && (
           <div className="text-center py-4">
-            <p className="text-black text-sm">No groups found</p>
+            <p className={`text-sm ${isDarkTheme ? 'text-white' : 'text-black'}`}>No groups found</p>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { HomeInterface } from "@/components/home/home-interface"
+import { AppProviders } from "@/components/providers/app-providers"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -52,9 +53,17 @@ export default async function HomePage() {
       redirect("/auth/login")
     }
 
-    return <HomeInterface user={user} profile={newProfile} />
+    return (
+      <AppProviders user={user} profile={newProfile}>
+        <HomeInterface user={user} profile={newProfile} />
+      </AppProviders>
+    )
   }
 
   console.log("Profile found:", profile)
-  return <HomeInterface user={user} profile={profile} />
+  return (
+    <AppProviders user={user} profile={profile}>
+      <HomeInterface user={user} profile={profile} />
+    </AppProviders>
+  )
 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { MessagesInterface } from "@/components/messages/messages-interface"
+import { AppProviders } from "@/components/providers/app-providers"
 
 export default async function MessagesPage() {
   try {
@@ -38,7 +39,11 @@ export default async function MessagesPage() {
       redirect("/auth/login")
     }
 
-    return <MessagesInterface user={user} profile={profile} />
+    return (
+      <AppProviders user={user} profile={profile}>
+        <MessagesInterface user={user} profile={profile} />
+      </AppProviders>
+    )
   } catch (error) {
     console.error("Error in MessagesPage:", error)
     redirect("/auth/login")

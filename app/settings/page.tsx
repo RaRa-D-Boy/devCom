@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { SettingsInterface } from "@/components/settings/settings-interface"
+import { AppProviders } from "@/components/providers/app-providers"
 
 export default async function SettingsPage() {
   try {
@@ -38,7 +39,11 @@ export default async function SettingsPage() {
       redirect("/auth/login")
     }
 
-    return <SettingsInterface user={user} profile={profile} />
+    return (
+      <AppProviders user={user} profile={profile}>
+        <SettingsInterface user={user} profile={profile} />
+      </AppProviders>
+    )
   } catch (error) {
     console.error("Error in SettingsPage:", error)
     redirect("/auth/login")

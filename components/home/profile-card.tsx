@@ -7,6 +7,7 @@ import {
   User as UserIcon,
   Users,
 } from "lucide-react"
+import { useTheme } from "@/contexts/theme-context"
 
 interface Profile {
   id: string
@@ -60,6 +61,9 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ profile }: ProfileCardProps) {
+  const { theme, glassEffect } = useTheme()
+  const isDarkTheme = theme === 'dark'
+  
   return (
     <div className="relative rounded-2xl shadow-2xl border border-none mb-4 hover:shadow-md transition-shadow overflow-hidden min-h-[300px]">
       {/* Background Media - covers entire card */}
@@ -71,8 +75,8 @@ export function ProfileCard({ profile }: ProfileCardProps) {
             : `url('/pattern6.jpg')`
         }}
       >
-        {/* Gradient overlay - transparent at top, white fade at bottom */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-600 via-transparent to-white/80"></div>
+        {/* Gradient overlay - transparent at top, theme-aware fade at bottom */}
+        <div className={`absolute inset-0 bg-gradient-to-b from-slate-600 via-transparent ${isDarkTheme ? 'to-gray-900/80' : 'to-white/80'}`}></div>
       </div>
       
       {/* Content Overlay */}
@@ -101,26 +105,34 @@ export function ProfileCard({ profile }: ProfileCardProps) {
           </div>
         </div>
 
-        {/* Bottom Section - Content and Actions with White Background */}
-        <div className="bg-white rounded-2xl m-2 p-4 shadow-lg">
+        {/* Bottom Section - Content and Actions with Theme-Aware Background */}
+        <div className={`rounded-2xl m-2 p-4 shadow-lg ${
+          isDarkTheme 
+            ? glassEffect === 'translucent' ? 'bg-neutral-900/70 backdrop-blur-sm border border-gray-700/30' :
+              glassEffect === 'transparent' ? 'bg-transparent' :
+              'bg-neutral-900 border border-gray-700'
+            : glassEffect === 'translucent' ? 'bg-white/80 backdrop-blur-sm border border-white/20' :
+              glassEffect === 'transparent' ? 'bg-transparent' :
+              'bg-white border border-gray-200'
+        }`}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600">Online</span>
+                <span className={`text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>Online</span>
               </div>
             </div>
             
-            <div className="flex items-center space-x-6 pt-3 border-t border-gray-200">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+            <div className={`flex items-center space-x-6 pt-3 ${glassEffect !== 'transparent' ? `border-t ${isDarkTheme ? 'border-gray-600' : 'border-gray-200'}` : ''}`}>
+              <Button variant="ghost" size="sm" className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
                 <FileText className="h-4 w-4 mr-2" />
                 Posts
               </Button>
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+              <Button variant="ghost" size="sm" className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
                 <UserIcon className="h-4 w-4 mr-2" />
                 Friends
               </Button>
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+              <Button variant="ghost" size="sm" className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
                 <Users className="h-4 w-4 mr-2" />
                 Groups
               </Button>

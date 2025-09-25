@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { 
   Send,
   ArrowLeft,
@@ -106,6 +107,18 @@ export function ChatRoom({ user, profile, otherUser }: ChatRoomProps) {
       e.preventDefault()
       handleSendMessage()
     }
+  }
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value)
+    
+    // Auto-resize textarea
+    const textarea = e.target
+    textarea.style.height = 'auto'
+    const scrollHeight = textarea.scrollHeight
+    const maxHeight = 200 // 200px max height
+    const newHeight = Math.min(scrollHeight, maxHeight)
+    textarea.style.height = `${newHeight}px`
   }
 
   const formatTime = (dateString: string) => {
@@ -268,13 +281,14 @@ export function ChatRoom({ user, profile, otherUser }: ChatRoomProps) {
             </Button>
             
             <div className="flex-1 relative">
-              <Input
+              <Textarea
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={handleTextareaChange}
                 placeholder="Type a message..."
-                className="pr-12 border-gray-200 focus:border-blue-500"
+                className="pr-12 border-gray-200 focus:border-transparent focus:ring-0 resize-none min-h-[40px] max-h-[200px]"
                 onKeyPress={handleKeyPress}
                 disabled={sending}
+                rows={1}
               />
               <Button
                 variant="ghost"

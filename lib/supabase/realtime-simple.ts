@@ -35,7 +35,7 @@ export class SimpleRealtimeMessaging {
       
       // Try to get messages with a simple query first
       let { data: messages, error: messagesError } = await this.supabase
-        .from('messages')
+        .from('one_on_one_messages')
         .select('*')
         .eq('chat_id', chatId)
         .order('created_at', { ascending: true })
@@ -47,7 +47,7 @@ export class SimpleRealtimeMessaging {
         
         // Try to get all messages and filter client-side
         const { data: allMessages, error: allMessagesError } = await this.supabase
-          .from('messages')
+          .from('one_on_one_messages')
           .select('*')
           .order('created_at', { ascending: true })
           .limit(1000) // Get more messages to filter
@@ -73,10 +73,9 @@ export class SimpleRealtimeMessaging {
         return { data: [], error: null }
       }
 
-      // Get unique sender and receiver IDs
-      const senderIds = [...new Set(messages.map(m => m.sender_id))]
-      const receiverIds = [...new Set(messages.map(m => m.receiver_id))]
-      const allUserIds = [...new Set([...senderIds, ...receiverIds])]
+      // Get unique author IDs (one_on_one_messages uses author_id instead of sender_id/receiver_id)
+      const authorIds = [...new Set(messages.map(m => m.author_id))]
+      const allUserIds = [...new Set(authorIds)]
 
       console.log('Fetching profiles for user IDs:', allUserIds)
 
@@ -109,18 +108,15 @@ export class SimpleRealtimeMessaging {
       // Combine messages with profiles
       const messagesWithProfiles = messages.map(message => ({
         ...message,
-        sender: profileMap.get(message.sender_id) || {
-          id: message.sender_id,
-          username: `user_${message.sender_id.slice(0, 8)}`,
-          full_name: `User ${message.sender_id.slice(0, 8)}`,
+        sender_id: message.author_id, // Map author_id to sender_id for compatibility
+        receiver_id: null, // one_on_one_messages doesn't have receiver_id
+        sender: profileMap.get(message.author_id) || {
+          id: message.author_id,
+          username: `user_${message.author_id.slice(0, 8)}`,
+          full_name: `User ${message.author_id.slice(0, 8)}`,
           avatar_url: null
         },
-        receiver: profileMap.get(message.receiver_id) || {
-          id: message.receiver_id,
-          username: `user_${message.receiver_id.slice(0, 8)}`,
-          full_name: `User ${message.receiver_id.slice(0, 8)}`,
-          avatar_url: null
-        }
+        receiver: null // one_on_one_messages doesn't have receiver
       }))
 
       console.log('Combined messages with profiles:', messagesWithProfiles.length)
@@ -142,10 +138,14 @@ export class SimpleRealtimeMessaging {
     chat_id: string
   }): Promise<{ data: Message | null; error: any }> {
     try {
-      // Insert the message
+      // Insert the message using one_on_one_messages table structure
       const { data, error } = await this.supabase
-        .from('messages')
-        .insert(messageData)
+        .from('one_on_one_messages')
+        .insert({
+          content: messageData.content,
+          author_id: messageData.sender_id,
+          chat_id: messageData.chat_id
+        })
         .select('*')
         .single()
 
@@ -154,11 +154,11 @@ export class SimpleRealtimeMessaging {
         return { data: null, error }
       }
 
-      // Get sender and receiver profiles
+      // Get sender profile
       const { data: profiles, error: profilesError } = await this.supabase
         .from('profiles')
         .select('*')
-        .in('id', [messageData.sender_id, messageData.receiver_id])
+        .in('id', [messageData.sender_id])
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError)
@@ -166,20 +166,20 @@ export class SimpleRealtimeMessaging {
       }
 
       const sender = profiles?.find(p => p.id === messageData.sender_id)
-      const receiver = profiles?.find(p => p.id === messageData.receiver_id)
 
       const message = {
         ...data,
+        sender_id: messageData.sender_id,
+        receiver_id: messageData.receiver_id,
         sender: sender || null,
-        receiver: receiver || null
+        receiver: null
       }
 
       // Update the chat's last message
       await this.supabase
-        .from('chats')
+        .from('one_on_one_chats')
         .update({
-          last_message: messageData.content,
-          last_message_at: new Date().toISOString()
+          updated_at: new Date().toISOString()
         })
         .eq('id', messageData.chat_id)
 
@@ -195,32 +195,52 @@ export class SimpleRealtimeMessaging {
    */
   async getOrCreateChat(userId: string, friendId: string): Promise<{ data: Chat | null; error: any }> {
     try {
-      // Check if chat already exists
+      // Check if chat already exists in either direction
       const { data: existingChat, error: findError } = await this.supabase
-        .from('chats')
+        .from('one_on_one_chats')
         .select('*')
-        .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+        .or(`and(user1_id.eq.${userId},user2_id.eq.${friendId}),and(user1_id.eq.${friendId},user2_id.eq.${userId})`)
         .single()
 
       if (existingChat && !findError) {
+        console.log('Found existing chat:', existingChat.id)
         return { data: existingChat, error: null }
       }
 
-      // Create new chat
+      // If no chat exists, create a new one
+      // Use consistent ordering to avoid duplicates (smaller ID first)
+      const user1Id = userId < friendId ? userId : friendId
+      const user2Id = userId < friendId ? friendId : userId
+
       const { data: newChat, error: createError } = await this.supabase
-        .from('chats')
+        .from('one_on_one_chats')
         .insert({
-          user_id: userId,
-          friend_id: friendId
+          user1_id: user1Id,
+          user2_id: user2Id
         })
         .select()
         .single()
 
       if (createError) {
+        // If we get a duplicate key error, try to find the existing chat again
+        if (createError.code === '23505') {
+          console.log('Duplicate key error, searching for existing chat...')
+          const { data: existingChatRetry, error: retryError } = await this.supabase
+            .from('one_on_one_chats')
+            .select('*')
+            .or(`and(user1_id.eq.${userId},user2_id.eq.${friendId}),and(user1_id.eq.${friendId},user2_id.eq.${userId})`)
+            .single()
+
+          if (existingChatRetry && !retryError) {
+            console.log('Found existing chat on retry:', existingChatRetry.id)
+            return { data: existingChatRetry, error: null }
+          }
+        }
         console.error('Error creating chat:', createError)
         return { data: null, error: createError }
       }
 
+      console.log('Created new chat:', newChat.id)
       return { data: newChat, error: null }
     } catch (error) {
       console.error('Error in getOrCreateChat:', error)
@@ -248,7 +268,7 @@ export class SimpleRealtimeMessaging {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
+          table: 'one_on_one_messages',
           filter: `chat_id=eq.${chatId}`
         },
         async (payload) => {
@@ -256,7 +276,7 @@ export class SimpleRealtimeMessaging {
           
           // Get the full message with profiles
           const { data: message, error } = await this.supabase
-            .from('messages')
+            .from('one_on_one_messages')
             .select('*')
             .eq('id', payload.new.id)
             .single()
@@ -266,19 +286,20 @@ export class SimpleRealtimeMessaging {
             return
           }
 
-          // Get sender and receiver profiles
+          // Get sender profile
           const { data: profiles } = await this.supabase
             .from('profiles')
             .select('*')
-            .in('id', [message.sender_id, message.receiver_id])
+            .in('id', [message.author_id])
 
-          const sender = profiles?.find(p => p.id === message.sender_id)
-          const receiver = profiles?.find(p => p.id === message.receiver_id)
+          const sender = profiles?.find(p => p.id === message.author_id)
 
           const fullMessage = {
             ...message,
+            sender_id: message.author_id,
+            receiver_id: null,
             sender: sender || null,
-            receiver: receiver || null
+            receiver: null
           }
 
           onMessage(fullMessage)
@@ -320,15 +341,15 @@ export class SimpleRealtimeMessaging {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
-          filter: `or(sender_id=eq.${userId},receiver_id=eq.${userId})`
+          table: 'one_on_one_messages',
+          filter: `author_id=eq.${userId}`
         },
         async (payload) => {
           console.log('New user message received:', payload)
           
           // Get the full message with profiles
           const { data: message, error } = await this.supabase
-            .from('messages')
+            .from('one_on_one_messages')
             .select('*')
             .eq('id', payload.new.id)
             .single()
@@ -338,19 +359,20 @@ export class SimpleRealtimeMessaging {
             return
           }
 
-          // Get sender and receiver profiles
+          // Get sender profile
           const { data: profiles } = await this.supabase
             .from('profiles')
             .select('*')
-            .in('id', [message.sender_id, message.receiver_id])
+            .in('id', [message.author_id])
 
-          const sender = profiles?.find(p => p.id === message.sender_id)
-          const receiver = profiles?.find(p => p.id === message.receiver_id)
+          const sender = profiles?.find(p => p.id === message.author_id)
 
           const fullMessage = {
             ...message,
+            sender_id: message.author_id,
+            receiver_id: null,
             sender: sender || null,
-            receiver: receiver || null
+            receiver: null
           }
 
           onMessage(fullMessage)

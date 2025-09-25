@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { GroupsInterface } from "@/components/groups/groups-interface"
+import { AppProviders } from "@/components/providers/app-providers"
 
 export default async function GroupsPage() {
   try {
@@ -38,7 +39,11 @@ export default async function GroupsPage() {
       redirect("/auth/login")
     }
 
-    return <GroupsInterface user={user} profile={profile} />
+    return (
+      <AppProviders user={user} profile={profile}>
+        <GroupsInterface user={user} profile={profile} />
+      </AppProviders>
+    )
   } catch (error) {
     console.error("Error in GroupsPage:", error)
     redirect("/auth/login")

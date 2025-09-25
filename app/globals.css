@@ -1,5 +1,342 @@
 @import "tailwindcss";
 
+/* Theme CSS Variables */
+:root {
+  /* Light Theme - Default */
+  --background: 255 255 255; /* white */
+  --foreground: 0 0 0; /* black */
+  --card: 255 255 255; /* white */
+  --card-foreground: 0 0 0; /* black */
+  --popover: 255 255 255; /* white */
+  --popover-foreground: 0 0 0; /* black */
+  --primary: 59 130 246; /* blue-500 */
+  --primary-foreground: 255 255 255; /* white */
+  --secondary: 245 245 245; /* gray-100 */
+  --secondary-foreground: 0 0 0; /* black */
+  --muted: 245 245 245; /* gray-100 */
+  --muted-foreground: 115 115 115; /* gray-500 */
+  --accent: 245 245 245; /* gray-100 */
+  --accent-foreground: 0 0 0; /* black */
+  --destructive: 239 68 68; /* red-500 */
+  --destructive-foreground: 255 255 255; /* white */
+  --border: 229 229 229; /* gray-200 */
+  --input: 229 229 229; /* gray-200 */
+  --ring: 59 130 246; /* blue-500 */
+  --radius: 0.5rem;
+  
+  /* Chat specific colors for light theme */
+  --chat-bg: 255 255 255; /* white */
+  --chat-sidebar: 248 250 252; /* gray-50 */
+  --chat-sidebar-header: 255 255 255; /* white */
+  --message-sent: 59 130 246; /* blue-500 */
+  --message-received: 245 245 245; /* gray-100 */
+  --message-text: 0 0 0; /* black */
+  --message-text-sent: 255 255 255; /* white */
+  --input-bg: 255 255 255; /* white */
+  --input-border: 229 229 229; /* gray-200 */
+  --unread-badge: 34 197 94; /* green-500 */
+  --online-indicator: 34 197 94; /* green-500 */
+  --away-indicator: 251 191 36; /* yellow-400 */
+  --offline-indicator: 239 68 68; /* red-500 */
+}
+
+.dark {
+  /* Dark Theme - Based on the provided image */
+  --background: 40 40 40; /* #282828 - main app background */
+  --foreground: 224 224 224; /* #E0E0E0 - primary text */
+  --card: 45 50 56; /* #2D3238 - chat area background */
+  --card-foreground: 224 224 224; /* #E0E0E0 - card text */
+  --popover: 40 40 40; /* #282828 */
+  --popover-foreground: 224 224 224; /* #E0E0E0 */
+  /* Note: --primary, --primary-foreground, --accent, --accent-foreground, --ring will be overridden by color palette */
+  --secondary: 32 32 32; /* #202020 - sidebar background */
+  --secondary-foreground: 224 224 224; /* #E0E0E0 */
+  --muted: 32 32 32; /* #202020 */
+  --muted-foreground: 160 160 160; /* #A0A0A0 - secondary text */
+  --destructive: 239 68 68; /* red-500 */
+  --destructive-foreground: 255 255 255; /* white */
+  --border: 58 58 58; /* #3A3A3A */
+  --input: 58 58 58; /* #3A3A3A */
+  
+  /* Chat specific colors for dark theme */
+  --chat-bg: 45 50 56; /* #2D3238 - chat area */
+  --chat-sidebar: 32 32 32; /* #202020 - sidebar */
+  --chat-sidebar-header: 40 40 40; /* #282828 - sidebar header */
+  --message-sent: 58 58 58; /* #3A3A3A - sent messages */
+  --message-received: 74 74 74; /* #4A4A4A - received messages */
+  --message-text: 224 224 224; /* #E0E0E0 - message text */
+  --message-text-sent: 255 255 255; /* white - sent message text */
+  --input-bg: 58 58 58; /* #3A3A3A - input background */
+  --input-border: 58 58 58; /* #3A3A3A */
+  --unread-badge: 76 175 80; /* #4CAF50 - green unread badge */
+  --online-indicator: 76 175 80; /* #4CAF50 - green online */
+  --away-indicator: 255 193 7; /* #FFC107 - yellow away */
+  --offline-indicator: 244 67 54; /* #F44336 - red offline */
+}
+
+/* Color Palette Variables - Higher specificity to override theme variables */
+:root[data-color-palette="blue"] {
+  --color-primary: 59 130 246; /* blue-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 239 246 255; /* blue-50 */
+  --color-secondary-foreground: 30 64 175; /* blue-800 */
+  --color-accent: 37 99 235; /* blue-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 59 130 246 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 239 246 255 !important;
+  --secondary-foreground: 30 64 175 !important;
+  --accent: 37 99 235 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 59 130 246 !important;
+}
+
+:root[data-color-palette="purple"] {
+  --color-primary: 147 51 234; /* purple-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 250 245 255; /* purple-50 */
+  --color-secondary-foreground: 88 28 135; /* purple-800 */
+  --color-accent: 126 34 206; /* purple-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 147 51 234 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 250 245 255 !important;
+  --secondary-foreground: 88 28 135 !important;
+  --accent: 126 34 206 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 147 51 234 !important;
+}
+
+:root[data-color-palette="green"] {
+  --color-primary: 34 197 94; /* green-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 240 253 244; /* green-50 */
+  --color-secondary-foreground: 22 101 52; /* green-800 */
+  --color-accent: 22 163 74; /* green-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 34 197 94 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 240 253 244 !important;
+  --secondary-foreground: 22 101 52 !important;
+  --accent: 22 163 74 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 34 197 94 !important;
+}
+
+:root[data-color-palette="orange"] {
+  --color-primary: 249 115 22; /* orange-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 255 247 237; /* orange-50 */
+  --color-secondary-foreground: 154 52 18; /* orange-800 */
+  --color-accent: 234 88 12; /* orange-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 249 115 22 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 255 247 237 !important;
+  --secondary-foreground: 154 52 18 !important;
+  --accent: 234 88 12 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 249 115 22 !important;
+}
+
+:root[data-color-palette="pink"] {
+  --color-primary: 236 72 153; /* pink-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 253 242 248; /* pink-50 */
+  --color-secondary-foreground: 157 23 77; /* pink-800 */
+  --color-accent: 219 39 119; /* pink-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 236 72 153 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 253 242 248 !important;
+  --secondary-foreground: 157 23 77 !important;
+  --accent: 219 39 119 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 236 72 153 !important;
+}
+
+:root[data-color-palette="indigo"] {
+  --color-primary: 99 102 241; /* indigo-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 238 242 255; /* indigo-50 */
+  --color-secondary-foreground: 55 48 163; /* indigo-800 */
+  --color-accent: 79 70 229; /* indigo-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 99 102 241 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 238 242 255 !important;
+  --secondary-foreground: 55 48 163 !important;
+  --accent: 79 70 229 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 99 102 241 !important;
+}
+
+:root[data-color-palette="teal"] {
+  --color-primary: 20 184 166; /* teal-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 240 253 250; /* teal-50 */
+  --color-secondary-foreground: 19 78 74; /* teal-800 */
+  --color-accent: 13 148 136; /* teal-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 20 184 166 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 240 253 250 !important;
+  --secondary-foreground: 19 78 74 !important;
+  --accent: 13 148 136 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 20 184 166 !important;
+}
+
+:root[data-color-palette="red"] {
+  --color-primary: 239 68 68; /* red-500 */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 254 242 242; /* red-50 */
+  --color-secondary-foreground: 153 27 27; /* red-800 */
+  --color-accent: 220 38 38; /* red-600 */
+  --color-accent-foreground: 255 255 255;
+  --primary: 239 68 68 !important;
+  --primary-foreground: 255 255 255 !important;
+  --secondary: 254 242 242 !important;
+  --secondary-foreground: 153 27 27 !important;
+  --accent: 220 38 38 !important;
+  --accent-foreground: 255 255 255 !important;
+  --ring: 239 68 68 !important;
+}
+
+/* Dark theme specific color palette overrides for better contrast */
+:root.dark[data-color-palette="blue"] {
+  --primary: 59 130 246 !important; /* blue-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 30 64 175 !important; /* blue-800 for dark theme */
+  --secondary-foreground: 239 246 255 !important; /* blue-50 for dark theme */
+  --accent: 37 99 235 !important; /* blue-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 59 130 246 !important; /* blue-500 */
+}
+
+:root.dark[data-color-palette="purple"] {
+  --primary: 147 51 234 !important; /* purple-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 88 28 135 !important; /* purple-800 for dark theme */
+  --secondary-foreground: 250 245 255 !important; /* purple-50 for dark theme */
+  --accent: 126 34 206 !important; /* purple-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 147 51 234 !important; /* purple-500 */
+}
+
+:root.dark[data-color-palette="green"] {
+  --primary: 34 197 94 !important; /* green-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 22 101 52 !important; /* green-800 for dark theme */
+  --secondary-foreground: 240 253 244 !important; /* green-50 for dark theme */
+  --accent: 22 163 74 !important; /* green-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 34 197 94 !important; /* green-500 */
+}
+
+:root.dark[data-color-palette="orange"] {
+  --primary: 249 115 22 !important; /* orange-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 154 52 18 !important; /* orange-800 for dark theme */
+  --secondary-foreground: 255 247 237 !important; /* orange-50 for dark theme */
+  --accent: 234 88 12 !important; /* orange-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 249 115 22 !important; /* orange-500 */
+}
+
+:root.dark[data-color-palette="pink"] {
+  --primary: 236 72 153 !important; /* pink-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 157 23 77 !important; /* pink-800 for dark theme */
+  --secondary-foreground: 253 242 248 !important; /* pink-50 for dark theme */
+  --accent: 219 39 119 !important; /* pink-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 236 72 153 !important; /* pink-500 */
+}
+
+:root.dark[data-color-palette="indigo"] {
+  --primary: 99 102 241 !important; /* indigo-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 55 48 163 !important; /* indigo-800 for dark theme */
+  --secondary-foreground: 238 242 255 !important; /* indigo-50 for dark theme */
+  --accent: 79 70 229 !important; /* indigo-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 99 102 241 !important; /* indigo-500 */
+}
+
+:root.dark[data-color-palette="teal"] {
+  --primary: 20 184 166 !important; /* teal-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 19 78 74 !important; /* teal-800 for dark theme */
+  --secondary-foreground: 240 253 250 !important; /* teal-50 for dark theme */
+  --accent: 13 148 136 !important; /* teal-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 20 184 166 !important; /* teal-500 */
+}
+
+:root.dark[data-color-palette="red"] {
+  --primary: 239 68 68 !important; /* red-500 */
+  --primary-foreground: 255 255 255 !important; /* white */
+  --secondary: 153 27 27 !important; /* red-800 for dark theme */
+  --secondary-foreground: 254 242 242 !important; /* red-50 for dark theme */
+  --accent: 220 38 38 !important; /* red-600 */
+  --accent-foreground: 255 255 255 !important; /* white */
+  --ring: 239 68 68 !important; /* red-500 */
+}
+
+/* Theme utility classes */
+.bg-background { background-color: rgb(var(--background)); }
+.bg-foreground { background-color: rgb(var(--foreground)); }
+.bg-card { background-color: rgb(var(--card)); }
+.bg-card-foreground { background-color: rgb(var(--card-foreground)); }
+.bg-popover { background-color: rgb(var(--popover)); }
+.bg-popover-foreground { background-color: rgb(var(--popover-foreground)); }
+.bg-primary { background-color: rgb(var(--primary)); }
+.bg-primary-foreground { background-color: rgb(var(--primary-foreground)); }
+.bg-secondary { background-color: rgb(var(--secondary)); }
+.bg-secondary-foreground { background-color: rgb(var(--secondary-foreground)); }
+.bg-muted { background-color: rgb(var(--muted)); }
+.bg-muted-foreground { background-color: rgb(var(--muted-foreground)); }
+.bg-accent { background-color: rgb(var(--accent)); }
+.bg-accent-foreground { background-color: rgb(var(--accent-foreground)); }
+.bg-destructive { background-color: rgb(var(--destructive)); }
+.bg-destructive-foreground { background-color: rgb(var(--destructive-foreground)); }
+
+.text-background { color: rgb(var(--background)); }
+.text-foreground { color: rgb(var(--foreground)); }
+.text-card { color: rgb(var(--card)); }
+.text-card-foreground { color: rgb(var(--card-foreground)); }
+.text-popover { color: rgb(var(--popover)); }
+.text-popover-foreground { color: rgb(var(--popover-foreground)); }
+.text-primary { color: rgb(var(--primary)); }
+.text-primary-foreground { color: rgb(var(--primary-foreground)); }
+.text-secondary { color: rgb(var(--secondary)); }
+.text-secondary-foreground { color: rgb(var(--secondary-foreground)); }
+.text-muted { color: rgb(var(--muted)); }
+.text-muted-foreground { color: rgb(var(--muted-foreground)); }
+.text-accent { color: rgb(var(--accent)); }
+.text-accent-foreground { color: rgb(var(--accent-foreground)); }
+.text-destructive { color: rgb(var(--destructive)); }
+.text-destructive-foreground { color: rgb(var(--destructive-foreground)); }
+
+.border-border { border-color: rgb(var(--border)); }
+.border-input { border-color: rgb(var(--input)); }
+
+/* Chat specific utility classes */
+.bg-chat-bg { background-color: rgb(var(--chat-bg)); }
+.bg-chat-sidebar { background-color: rgb(var(--chat-sidebar)); }
+.bg-chat-sidebar-header { background-color: rgb(var(--chat-sidebar-header)); }
+.bg-message-sent { background-color: rgb(var(--message-sent)); }
+.bg-message-received { background-color: rgb(var(--message-received)); }
+.text-message-text { color: rgb(var(--message-text)); }
+.text-message-text-sent { color: rgb(var(--message-text-sent)); }
+.bg-input-bg { background-color: rgb(var(--input-bg)); }
+.border-input-border { border-color: rgb(var(--input-border)); }
+.bg-unread-badge { background-color: rgb(var(--unread-badge)); }
+.bg-online-indicator { background-color: rgb(var(--online-indicator)); }
+.bg-away-indicator { background-color: rgb(var(--away-indicator)); }
+.bg-offline-indicator { background-color: rgb(var(--offline-indicator)); }
+
 /* Glassmorphism utility classes */
 .glass {
   background: rgba(255, 255, 255, 0.1);
@@ -7,6 +344,14 @@
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-dark {
+  background: rgba(40, 40, 40, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(58, 58, 58, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .glass-card {
@@ -110,7 +455,7 @@
 
 /* Background classes */
 .dev-background {
-  background-image: url('/keyboard3.png');
+  background-image: url('/pattern3.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

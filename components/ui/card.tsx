@@ -1,13 +1,54 @@
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/contexts/theme-context'
 
 function Card({ className, ...props }: React.ComponentProps<'div'>) {
+  // Safe theme hook usage with fallback
+  let theme = 'light';
+  let glassEffect = 'translucent';
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+    glassEffect = themeContext.glassEffect;
+  } catch (error) {
+    // Fallback to default values if theme context is not available
+    console.warn('Theme context not available in Card component, using fallback values');
+  }
+  
+  const getCardBackground = () => {
+    if (theme === 'dark') {
+      switch (glassEffect) {
+        case 'translucent':
+          return 'bg-neutral-900/70 backdrop-blur-sm'
+        case 'transparent':
+          return 'bg-transparent'
+        case 'opaque':
+          return 'bg-neutral-900'
+        default:
+          return 'bg-neutral-900/80 backdrop-blur-sm'
+      }
+    } else {
+      switch (glassEffect) {
+        case 'translucent':
+          return 'bg-white/80 backdrop-blur-sm'
+        case 'transparent':
+          return 'bg-transparent'
+        case 'opaque':
+          return 'bg-white'
+        default:
+          return 'bg-white/80 backdrop-blur-sm'
+      }
+    }
+  }
+
   return (
     <div
       data-slot="card"
       className={cn(
-        'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm',
+        'text-card-foreground flex flex-col gap-6 rounded-xl border-none py-6 shadow-sm',
+        getCardBackground(),
         className,
       )}
       {...props}

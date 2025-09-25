@@ -15,6 +15,7 @@ import {
   File,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useTheme } from "@/contexts/theme-context"
 
 interface Profile {
   id: string
@@ -85,6 +86,9 @@ export function ActivityFeed({ user, onViewPost }: ActivityFeedProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [playingVideos, setPlayingVideos] = useState<Set<string>>(new Set())
   const supabase = createClient()
+  const { theme, glassEffect } = useTheme()
+  
+  const isDarkTheme = theme === 'dark'
 
   useEffect(() => {
     loadPosts()
@@ -180,16 +184,16 @@ export function ActivityFeed({ user, onViewPost }: ActivityFeedProps) {
     <div className="lg:col-span-2">
       {/* Activity Feed Header */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl font-bold text-black">Activity Feed</h2>
+        <h2 className={`text-xl font-bold ${isDarkTheme ? 'text-white' : 'text-black'}`}>Activity Feed</h2>
         <div className="flex items-center space-x-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm text-black/70">Live</span>
+          <span className={`text-sm ${isDarkTheme ? 'text-white/70' : 'text-black/70'}`}>Live</span>
         </div>
       </div>
 
       {/* Scrollable Activity Feed */}
       <div className="h-[calc(100vh-200px)] lg:h-[calc(100vh-100px)] overflow-y-auto">
-        <div className="space-y-0 p-4">
+        <div className="space-y-0 ">
           {posts.map((post) => (
             <div key={post.id} className="relative rounded-2xl shadow-2xl border border-none mb-4 hover:shadow-md transition-shadow overflow-hidden min-h-[400px]">
               {/* Background Media - covers entire card */}
@@ -242,15 +246,15 @@ export function ActivityFeed({ user, onViewPost }: ActivityFeedProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <File className="h-16 w-16 text-gray-400" />
+                    <div className={`w-full h-full flex items-center justify-center ${isDarkTheme ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <File className={`h-16 w-16 ${isDarkTheme ? 'text-gray-300' : 'text-gray-400'}`} />
                     </div>
                   )}
-                  {/* Gradient overlay - transparent at top, white fade at bottom */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-slate-600 via-transparent to-white/80"></div>
+                  {/* Gradient overlay - transparent at top, theme-aware fade at bottom */}
+                  <div className={`absolute inset-0 bg-gradient-to-b from-slate-600 via-transparent ${isDarkTheme ? 'to-gray-900/80' : 'to-white/80'}`}></div>
                 </div>
               ) : (
-                <div className="absolute inset-0 bg-gray-50"></div>
+                <div className={`absolute inset-0 ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'}`}></div>
               )}
               
               {/* Content Overlay */}
@@ -282,37 +286,45 @@ export function ActivityFeed({ user, onViewPost }: ActivityFeedProps) {
                   </div>
                 </div>
 
-                {/* Bottom Section - Content and Actions with White Background */}
-                <div className="bg-white rounded-2xl m-2 p-4 shadow-lg">
+                {/* Bottom Section - Content and Actions with Theme-Aware Background */}
+                <div className={`rounded-2xl m-2 p-4 shadow-lg ${
+                  isDarkTheme 
+                    ? glassEffect === 'translucent' ? 'bg-neutral-900/70 backdrop-blur-sm border border-gray-700/30' :
+                      glassEffect === 'transparent' ? 'bg-transparent' :
+                      'bg-neutral-900 border border-gray-700'
+                    : glassEffect === 'translucent' ? 'bg-white/80 backdrop-blur-sm border border-white/20' :
+                      glassEffect === 'transparent' ? 'bg-transparent' :
+                      'bg-white border border-gray-200'
+                }`}>
                   <div className="space-y-4">
                     {post.content && (
-                      <p className="text-black leading-relaxed">{post.content}</p>
+                      <p className={`leading-relaxed ${isDarkTheme ? 'text-white' : 'text-black'}`}>{post.content}</p>
                     )}
                     
-                    <div className="flex items-center space-x-6 pt-3 border-t border-gray-200">
+                    <div className={`flex items-center space-x-6 pt-3 ${glassEffect !== 'transparent' ? `border-t ${isDarkTheme ? 'border-gray-600' : 'border-gray-200'}` : ''}`}>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLikePost(post.id, post.is_liked)}
-                        className={`text-gray-600 hover:bg-gray-100 hover:text-gray-900 ${post.is_liked ? "text-red-500" : ""}`}
+                        className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'} ${post.is_liked ? "text-red-500" : ""}`}
                       >
                         <Heart className={`h-4 w-4 mr-2 ${post.is_liked ? "fill-current text-red-500" : ""}`} />
                         {post.likes_count}
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                      <Button variant="ghost" size="sm" className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
                         <MessageCircle className="h-4 w-4 mr-2" />
                         {post.comments_count}
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
                         onClick={() => onViewPost(post)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                      <Button variant="ghost" size="sm" className={`${isDarkTheme ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
                         <Share2 className="h-4 w-4 mr-2" />
                         Share
                       </Button>
@@ -325,10 +337,18 @@ export function ActivityFeed({ user, onViewPost }: ActivityFeedProps) {
           
           {posts.length === 0 && (
             <div className="text-center py-16">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-                <p className="text-gray-600">Be the first to share something with your network!</p>
+              <div className={`rounded-2xl shadow-sm p-8 ${
+                isDarkTheme 
+                  ? glassEffect === 'translucent' ? 'bg-neutral-900/70 backdrop-blur-sm border border-gray-700/30' :
+                    glassEffect === 'transparent' ? 'bg-transparent' :
+                    'bg-neutral-900 border border-gray-700'
+                  : glassEffect === 'translucent' ? 'bg-white/80 backdrop-blur-sm border border-white/20' :
+                    glassEffect === 'transparent' ? 'bg-transparent' :
+                    'bg-white border border-gray-200'
+              }`}>
+                <MessageCircle className={`h-16 w-16 mx-auto mb-4 ${isDarkTheme ? 'text-gray-400' : 'text-gray-400'}`} />
+                <h3 className={`text-lg font-semibold mb-2 ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>No posts yet</h3>
+                <p className={`${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>Be the first to share something with your network!</p>
               </div>
             </div>
           )}
