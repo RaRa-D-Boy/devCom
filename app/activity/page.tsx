@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ActivityInterface } from "@/components/activity/activity-interface"
+import { AppProviders } from "@/components/providers/app-providers"
 
 export default async function ActivityPage() {
   try {
@@ -38,7 +39,11 @@ export default async function ActivityPage() {
       redirect("/auth/login")
     }
 
-    return <ActivityInterface user={user} profile={profile} />
+    return (
+      <AppProviders user={user} profile={profile}>
+        <ActivityInterface user={user} profile={profile} />
+      </AppProviders>
+    )
   } catch (error) {
     console.error("Error in ActivityPage:", error)
     redirect("/auth/login")

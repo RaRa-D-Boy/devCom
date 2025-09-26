@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { createClient } from "@/lib/supabase/client"
 import { InlineChat } from "@/components/chat/inline-chat"
 import { ChatInitiationModal } from "@/components/chat/chat-initiation-modal"
+import { FriendRequestModal } from "@/components/modals/friend-request-modal"
 import { useRouter } from "next/navigation"
 import { useTheme } from "@/contexts/theme-context"
 
@@ -75,6 +76,8 @@ export function UsersList({ user, onViewUserProfile }: UsersListProps) {
   const [selectedUserForChat, setSelectedUserForChat] = useState<Profile | null>(null)
   const [isInitiationModalOpen, setIsInitiationModalOpen] = useState(false)
   const [selectedUserForInitiation, setSelectedUserForInitiation] = useState<Profile | null>(null)
+  const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false)
+  const [selectedUserForFriendRequest, setSelectedUserForFriendRequest] = useState<Profile | null>(null)
   const supabase = createClient()
   const router = useRouter()
   const { theme, glassEffect } = useTheme()
@@ -121,23 +124,41 @@ export function UsersList({ user, onViewUserProfile }: UsersListProps) {
     setSelectedUserForInitiation(null)
   }
 
-  const handleAddFriend = async (userProfile: Profile) => {
+  const handleAddFriendClick = (userProfile: Profile) => {
+    setSelectedUserForFriendRequest(userProfile)
+    setIsFriendRequestModalOpen(true)
+  }
+
+  const handleConfirmFriendRequest = async () => {
+    if (!selectedUserForFriendRequest) return
+    
     setIsAddingFriend(true)
     try {
-      const { error } = await supabase
-        .from("friendships")
-        .insert({
-          user_id: user.id,
-          friend_id: userProfile.id,
-          status: "pending"
-        })
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          friend_id: selectedUserForFriendRequest.id,
+          action: 'send_request'
+        }),
+      })
 
-      if (error) throw error
+      const result = await response.json()
 
-      // Show success message or update UI
-      console.log(`Friend request sent to ${userProfile.username}`)
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send friend request')
+      }
+
+      // Show success message
+      console.log(`Friend request sent to ${selectedUserForFriendRequest.username}`)
+      // You could add a toast notification here
+      
     } catch (error) {
       console.error("Error sending friend request:", error)
+      // You could add an error toast notification here
+      throw error // Re-throw to let the modal handle it
     } finally {
       setIsAddingFriend(false)
     }
@@ -218,7 +239,7 @@ export function UsersList({ user, onViewUserProfile }: UsersListProps) {
                       size="sm"
                       variant="ghost"
                       className={`h-8 w-8 p-0 ${isDarkTheme ? 'text-gray-300 hover:text-white hover:bg-gray-600' : 'text-gray-600 hover:text-white hover:bg-black'}`}
-                      onClick={() => handleAddFriend(userProfile)}
+                      onClick={() => handleAddFriendClick(userProfile)}
                       disabled={isAddingFriend}
                     >
                       <UserPlus className="h-4 w-4" />
@@ -307,7 +328,7 @@ export function UsersList({ user, onViewUserProfile }: UsersListProps) {
                   className={`h-5 w-5 p-0 ${isDarkTheme ? 'text-gray-300 hover:text-white hover:bg-gray-600' : 'text-gray-600 hover:text-white hover:bg-black'}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleAddFriend(userProfile)
+                    handleAddFriendClick(userProfile)
                   }}
                   disabled={isAddingFriend}
                 >
@@ -348,6 +369,20 @@ export function UsersList({ user, onViewUserProfile }: UsersListProps) {
             setIsChatOpen(false)
             setSelectedUserForChat(null)
           }}
+        />
+      )}
+
+      {/* Friend Request Modal */}
+      {selectedUserForFriendRequest && (
+        <FriendRequestModal
+          isOpen={isFriendRequestModalOpen}
+          onClose={() => {
+            setIsFriendRequestModalOpen(false)
+            setSelectedUserForFriendRequest(null)
+          }}
+          onConfirm={handleConfirmFriendRequest}
+          userProfile={selectedUserForFriendRequest}
+          currentUser={user}
         />
       )}
     </div>

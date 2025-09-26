@@ -13,6 +13,8 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { NotificationsList } from "@/components/notifications/notifications-list"
+import { useTheme } from "@/contexts/theme-context"
 
 interface Profile {
   id: string
@@ -46,6 +48,18 @@ export function ActivityInterface({ user, profile }: ActivityInterfaceProps) {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+  
+  // Safe theme hook usage with fallback
+  let theme = 'light';
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+  } catch (error) {
+    console.warn('Theme context not available in ActivityInterface component, using fallback values');
+  }
+  
+  const isDarkTheme = theme === 'dark';
 
   useEffect(() => {
     loadActivities()
@@ -164,8 +178,8 @@ export function ActivityInterface({ user, profile }: ActivityInterfaceProps) {
       <AppLayout user={user} profile={profile} activePage="activity">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-black">Loading activity...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className={`mt-4 ${isDarkTheme ? 'text-white' : 'text-black'}`}>Loading notification...</p>
           </div>
         </div>
       </AppLayout>
@@ -177,16 +191,12 @@ export function ActivityInterface({ user, profile }: ActivityInterfaceProps) {
       <div className="pb-20 lg:pb-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-black">Activity</h1>
-        <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-black/20 text-black border-black/30">
-            {activities.filter(a => !a.is_read).length} unread
-          </Badge>
-        </div>
+        <h1 className={`text-2xl font-bold ${isDarkTheme ? 'text-white' : 'text-black'}`}>Notification</h1>
+       
       </div>
 
       {/* Activity Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-red-500/20 rounded-lg">
@@ -242,61 +252,10 @@ export function ActivityInterface({ user, profile }: ActivityInterfaceProps) {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      {/* Activity Feed */}
-      <div className="space-y-2">
-        {activities.map((activity) => (
-          <div 
-            key={activity.id} 
-            className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-200 ${!activity.is_read ? 'border-l-4 border-blue-500' : ''}`}
-          >
-            <div className="flex items-start space-x-3">
-              <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
-                {getActivityIcon(activity.type)}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <Avatar className="h-8 w-8 ring-2 ring-gray-200">
-                    <AvatarImage src={activity.user.avatar_url} />
-                    <AvatarFallback className="bg-neutral-700 text-white text-sm">
-                      {(activity.user.full_name || activity.user.display_name || activity.user.username)?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-black font-medium">
-                      {activity.user.full_name || activity.user.display_name || activity.user.username}
-                    </p>
-                    <p className="text-gray-600 text-sm">
-                      {activity.content}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-gray-500 text-xs">
-                    {new Date(activity.created_at).toLocaleString()}
-                  </p>
-                  {!activity.is_read && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {activities.length === 0 && (
-        <div className="text-center py-12">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No activity yet</h3>
-            <p className="text-gray-600">Your activity feed will appear here</p>
-          </div>
-        </div>
-      )}
+      {/* Notifications and Friend Requests */}
+      <NotificationsList user={user} />
       </div>
     </AppLayout>
   )

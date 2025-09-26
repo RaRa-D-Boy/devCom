@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSimpleRealtimeMessaging } from "@/hooks/use-simple-realtime-messaging"
+import { useTheme } from "@/contexts/theme-context"
 
 interface Profile {
   id: string
@@ -57,6 +58,18 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
   const [chatId, setChatId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  
+  // Safe theme hook usage with fallback
+  let theme = 'light';
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+  } catch (error) {
+    console.warn('Theme context not available in ChatInitiationModal component, using fallback values');
+  }
+  
+  const isDarkTheme = theme === 'dark';
 
   // Use simple real-time messaging hook
   const {
@@ -105,10 +118,10 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
       if (result.success) {
         setNewMessage("")
         
-        // Navigate to dedicated chat page after successful message send
+        // Navigate to messages page with chat pre-selected after successful message send
         setTimeout(() => {
           onClose() // Close the modal first
-          router.push(`/chat/${otherUser.id}`) // Navigate to dedicated chat page
+          router.push(`/messages?chat=${chatId}`) // Navigate to messages page with chat selected
         }, 500) // Small delay to show the message was sent
       } else {
         console.error("Failed to send message:", result.error)
@@ -151,23 +164,23 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md h-[600px] p-0 overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-100 border-0">
+      <DialogContent className="max-w-md h-[600px] p-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           {/* User Info Card - Compact version when messages exist */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 mb-4 border border-white/50">
+          <div className={`${isDarkTheme ? 'bg-gray-800/70 backdrop-blur-sm border-gray-700/50' : 'bg-white/70 backdrop-blur-sm border-white/50'} rounded-2xl p-3 mb-4 border`}>
             <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10 ring-2 ring-purple-200">
+              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                 <AvatarImage src={otherUser.avatar_url} />
                 <AvatarFallback className="bg-neutral-700 text-white">
                   {(otherUser.full_name || otherUser.display_name || otherUser.username)?.[0]}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 text-sm">
+                <h3 className={`font-semibold text-sm ${isDarkTheme ? 'text-white' : 'text-black'}`}>
                   {otherUser.full_name || otherUser.display_name || otherUser.username}
                 </h3>
-                <p className="text-xs text-gray-600">@{otherUser.username}</p>
+                <p className={`text-xs ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>@{otherUser.username}</p>
               </div>
               <div className={`w-2 h-2 rounded-full border border-white ${
                 otherUser.status === 'active' ? 'bg-green-500' :
@@ -186,10 +199,14 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
           {/* Greeting Section - Only show if no messages */}
           {messages.length === 0 && !loading && (
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent mb-2">
+              <h1 className={`text-2xl font-serif font-bold mb-2 ${
+                isDarkTheme 
+                  ? 'bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent' 
+                  : 'bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent'
+              }`}>
                 Hello {otherUser.full_name || otherUser.display_name || otherUser.username}
               </h1>
-              <p className="text-gray-700 text-lg font-medium">
+              <p className={`text-lg font-medium ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
                 How can I help you today?
               </p>
             </div>
@@ -202,18 +219,20 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600 text-sm">Loading messages...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className={`mt-2 text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Loading messages...</p>
                 </div>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="h-6 w-6 text-purple-600" />
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    isDarkTheme ? 'bg-primary/20' : 'bg-primary/10'
+                  }`}>
+                    <MessageCircle className={`h-6 w-6 ${isDarkTheme ? 'text-primary' : 'text-primary'}`} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Start a conversation</h3>
-                  <p className="text-gray-600 text-sm">Send a message to begin chatting with {otherUser.full_name || otherUser.display_name || otherUser.username}</p>
+                  <h3 className={`text-lg font-semibold mb-2 ${isDarkTheme ? 'text-white' : 'text-black'}`}>Start a conversation</h3>
+                  <p className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Send a message to begin chatting with {otherUser.full_name || otherUser.display_name || otherUser.username}</p>
                 </div>
               </div>
             ) : (
@@ -224,12 +243,14 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
                 >
                   <div className={`max-w-xs px-3 py-2 rounded-2xl ${
                     message.sender_id === user.id 
-                      ? 'bg-black text-white' 
-                      : 'bg-white/80 backdrop-blur-sm text-gray-900 border border-white/50'
+                      ? 'bg-primary text-primary-foreground' 
+                      : isDarkTheme 
+                        ? 'bg-gray-800/80 backdrop-blur-sm text-white border border-gray-700/50'
+                        : 'bg-white/80 backdrop-blur-sm text-gray-900 border border-white/50'
                   }`}>
                     <p className="text-sm">{message.content}</p>
                     <p className={`text-xs mt-1 ${
-                      message.sender_id === user.id ? 'text-gray-300' : 'text-gray-500'
+                      message.sender_id === user.id ? 'text-primary-foreground/70' : isDarkTheme ? 'text-gray-400' : 'text-gray-500'
                     }`}>
                       {formatTime(message.created_at)}
                     </p>
@@ -242,19 +263,19 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
 
           {/* Input Section */}
           <div className="space-y-3">
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 border border-white/50">
+            <div className={`${isDarkTheme ? 'bg-gray-800/70 backdrop-blur-sm border-gray-700/50' : 'bg-white/70 backdrop-blur-sm border-white/50'} rounded-2xl p-3 border`}>
               <div className="flex items-center space-x-3">
                 <Button
                   variant="ghost"
                   size="sm"
                   className={`w-8 h-8 rounded-full p-0 ${
                     isRecording 
-                      ? 'bg-black animate-pulse' 
-                      : 'bg-black hover:bg-gray-800'
+                      ? 'bg-primary animate-pulse' 
+                      : 'bg-primary hover:bg-primary/90'
                   }`}
                   onClick={isRecording ? handleStopRecording : handleStartRecording}
                 >
-                  <Mic className="h-4 w-4 text-white" />
+                  <Mic className="h-4 w-4 text-primary-foreground" />
                 </Button>
                 
                 <div className="flex-1">
@@ -262,7 +283,11 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
-                    className="border-0 bg-transparent focus:ring-0 text-sm placeholder:text-gray-500"
+                    className={`border-0 bg-transparent focus:ring-0 text-sm ${
+                      isDarkTheme 
+                        ? 'text-white placeholder:text-gray-400' 
+                        : 'text-black placeholder:text-gray-500'
+                    }`}
                     onKeyPress={handleKeyPress}
                     disabled={sending}
                   />
@@ -271,7 +296,11 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-8 h-8 p-0 text-gray-600 hover:bg-white/50"
+                  className={`w-8 h-8 p-0 ${
+                    isDarkTheme 
+                      ? 'text-gray-400 hover:bg-gray-700/50' 
+                      : 'text-gray-600 hover:bg-white/50'
+                  }`}
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>
@@ -279,7 +308,7 @@ export function ChatInitiationModal({ user, otherUser, isOpen, onClose, onStartC
                 <Button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sending}
-                  className="w-8 h-8 p-0 bg-black hover:bg-gray-800 text-white rounded-full"
+                  className="w-8 h-8 p-0 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

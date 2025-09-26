@@ -141,6 +141,11 @@ export function HomeInterface({ user, profile }: HomeInterfaceProps) {
           <UsersList user={user} onViewUserProfile={handleViewUserProfile} />
         </div>
         
+        {/* Groups - Mobile Only */}
+        <div className="mb-4">
+          <GroupsList user={user} />
+        </div>
+        
         {/* Activity Feed */}
         <ActivityFeed user={user} onViewPost={handleViewPost} />
       </div>

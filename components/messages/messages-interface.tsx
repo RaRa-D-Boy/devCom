@@ -27,11 +27,14 @@ import { Chat, Message, Profile } from "./types";
 interface MessagesInterfaceProps {
   user: User;
   profile: Profile;
+  initialChatId?: string;
+  initialGroupId?: string;
 }
 
-export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
+export function MessagesInterface({ user, profile, initialChatId, initialGroupId }: MessagesInterfaceProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null); // Group chat state
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,7 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
     "connected" | "disconnected"
   >("connected");
   const [showChatRoom, setShowChatRoom] = useState(false); // For mobile responsive behavior
+  const [isGroupChat, setIsGroupChat] = useState(false); // Track if current chat is a group
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -68,7 +72,12 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
 
   useEffect(() => {
     loadChats();
-  }, []);
+    
+    // Load group if initialGroupId is provided
+    if (initialGroupId) {
+      loadGroup(initialGroupId);
+    }
+  }, [initialGroupId]);
 
   useEffect(() => {
     if (selectedChat) {
@@ -179,13 +188,45 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
       }
 
       setChats(chatsList);
-      if (chatsList.length > 0 && !selectedChat) {
+      
+      // Auto-select chat if initialChatId is provided
+      if (initialChatId && chatsList.length > 0) {
+        const targetChat = chatsList.find(chat => chat.id === initialChatId);
+        if (targetChat) {
+          setSelectedChat(targetChat);
+        } else if (!selectedChat) {
+          // Fallback to first chat if initialChatId not found
+          setSelectedChat(chatsList[0]);
+        }
+      } else if (chatsList.length > 0 && !selectedChat) {
         setSelectedChat(chatsList[0]);
       }
     } catch (error) {
       console.error("Error loading chats:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadGroup = async (groupId: string) => {
+    try {
+      // Get group details
+      const { data: groupData, error: groupError } = await supabase
+        .from("groups")
+        .select("*")
+        .eq("id", groupId)
+        .single();
+
+      if (groupError) throw groupError;
+
+      if (groupData) {
+        setSelectedGroup(groupData);
+        setIsGroupChat(true);
+        setSelectedChat(null); // Clear individual chat selection
+        setShowChatRoom(true); // Show chat room for mobile
+      }
+    } catch (error) {
+      console.error("Error loading group:", error);
     }
   };
 
@@ -630,7 +671,7 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
             showChatRoom ? "block" : "hidden lg:flex"
           }`}
         >
-          {selectedChat ? (
+          {(selectedChat || (isGroupChat && selectedGroup)) ? (
             <>
               {/* Chat Header */}
               <div className={`py-4 px-0 lg:p-4 border-b ${isDarkTheme ? 'border-neutral-700' : 'border-gray-200'}`}>
@@ -646,46 +687,83 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
 
-                    <Avatar className="h-10 w-10 ring-2 ring-border">
-                      <AvatarImage src={selectedChat.friend.avatar_url} />
-                      <AvatarFallback className="bg-neutral-700 text-white">
-                        {
-                          (selectedChat.friend.full_name ||
-                            selectedChat.friend.display_name ||
-                            selectedChat.friend.username)?.[0]
-                        }
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold text-foreground">
-                        {selectedChat.friend.full_name ||
-                          selectedChat.friend.display_name ||
-                          selectedChat.friend.username}
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <p className="text-muted-foreground text-sm">
-                          {selectedChat.friend.status === "active"
-                            ? "Online"
-                            : selectedChat.friend.status === "busy"
-                            ? "Busy"
-                            : selectedChat.friend.status === "inactive"
-                            ? "Away"
-                            : "Offline"}
-                        </p>
-                        <div className="flex items-center space-x-1">
-                          {connectionStatus === "connected" ? (
-                            <Wifi className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <WifiOff className="h-3 w-3 text-red-500" />
-                          )}
-                          <span className="text-xs text-gray-500">
-                            {connectionStatus === "connected"
-                              ? "Live"
-                              : "Offline"}
-                          </span>
+                    {isGroupChat && selectedGroup ? (
+                      // Group Chat Header
+                      <>
+                        <Avatar className="h-10 w-10 ring-2 ring-border">
+                          <AvatarImage src={selectedGroup.avatar_url} />
+                          <AvatarFallback className="bg-neutral-700 text-white">
+                            {selectedGroup.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {selectedGroup.name}
+                          </h3>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-muted-foreground text-sm">
+                              Group Chat
+                            </p>
+                            <div className="flex items-center space-x-1">
+                              {connectionStatus === "connected" ? (
+                                <Wifi className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <WifiOff className="h-3 w-3 text-red-500" />
+                              )}
+                              <span className="text-xs text-gray-500">
+                                {connectionStatus === "connected"
+                                  ? "Live"
+                                  : "Offline"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </>
+                    ) : selectedChat ? (
+                      // Individual Chat Header
+                      <>
+                        <Avatar className="h-10 w-10 ring-2 ring-border">
+                          <AvatarImage src={selectedChat.friend.avatar_url} />
+                          <AvatarFallback className="bg-neutral-700 text-white">
+                            {
+                              (selectedChat.friend.full_name ||
+                                selectedChat.friend.display_name ||
+                                selectedChat.friend.username)?.[0]
+                            }
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {selectedChat.friend.full_name ||
+                              selectedChat.friend.display_name ||
+                              selectedChat.friend.username}
+                          </h3>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-muted-foreground text-sm">
+                              {selectedChat.friend.status === "active"
+                                ? "Online"
+                                : selectedChat.friend.status === "busy"
+                                ? "Busy"
+                                : selectedChat.friend.status === "inactive"
+                                ? "Away"
+                                : "Offline"}
+                            </p>
+                            <div className="flex items-center space-x-1">
+                              {connectionStatus === "connected" ? (
+                                <Wifi className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <WifiOff className="h-3 w-3 text-red-500" />
+                              )}
+                              <span className="text-xs text-gray-500">
+                                {connectionStatus === "connected"
+                                  ? "Live"
+                                  : "Offline"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : null}
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -716,7 +794,23 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
 
               {/* Messages */}
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {messages.length === 0 ? (
+                {isGroupChat ? (
+                  // Group Chat Placeholder
+                  <div className="flex-1 flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <MessageCircle className={`h-16 w-16 mx-auto mb-4 ${isDarkTheme ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <h3 className={`text-lg font-semibold mb-2 ${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                        {selectedGroup?.name}
+                      </h3>
+                      <p className={`mb-4 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Group chat coming soon!
+                      </p>
+                      <p className={`text-sm ${isDarkTheme ? 'text-gray-500' : 'text-gray-400'}`}>
+                        Group messaging functionality will be implemented in a future update.
+                      </p>
+                    </div>
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center h-full">
                     <div className="text-center">
                       <MessageCircle className={`h-16 w-16 mx-auto mb-4 ${isDarkTheme ? 'text-gray-600' : 'text-gray-300'}`} />
@@ -743,20 +837,22 @@ export function MessagesInterface({ user, profile }: MessagesInterfaceProps) {
               </div>
 
               {/* Message Input */}
-              <MessageInput
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                selectedFiles={selectedFiles}
-                setSelectedFiles={setSelectedFiles}
-                replyingTo={replyingTo}
-                editingMessage={editingMessage}
-                uploading={uploading}
-                onSendMessage={handleSendMessage}
-                onCancelReply={cancelReply}
-                onCancelEdit={cancelEdit}
-                onMediaSelect={handleMediaSelect}
-                onCameraStart={startCamera}
-              />
+              {!isGroupChat && (
+                <MessageInput
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  selectedFiles={selectedFiles}
+                  setSelectedFiles={setSelectedFiles}
+                  replyingTo={replyingTo}
+                  editingMessage={editingMessage}
+                  uploading={uploading}
+                  onSendMessage={handleSendMessage}
+                  onCancelReply={cancelReply}
+                  onCancelEdit={cancelEdit}
+                  onMediaSelect={handleMediaSelect}
+                  onCameraStart={startCamera}
+                />
+              )}
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">

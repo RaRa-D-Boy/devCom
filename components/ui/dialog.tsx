@@ -39,7 +39,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 backdrop-blur-sm',
         className,
       )}
       {...props}
@@ -68,28 +68,30 @@ function DialogContent({
     console.warn('Theme context not available in DialogContent component, using fallback values');
   }
   
+  const isDarkTheme = theme === 'dark';
+  
   const getDialogBackground = () => {
     if (theme === 'dark') {
       switch (glassEffect) {
         case 'translucent':
-          return 'bg-neutral-900/95 backdrop-blur-md'
+          return 'bg-neutral-900/90 backdrop-blur-xl border-neutral-700/50'
         case 'transparent':
-          return 'bg-neutral-900/80'
+          return 'bg-neutral-900/70 backdrop-blur-lg border-neutral-700/30'
         case 'opaque':
-          return 'bg-neutral-900'
+          return 'bg-neutral-900 border-neutral-700'
         default:
-          return 'bg-neutral-900/95 backdrop-blur-md'
+          return 'bg-neutral-900/90 backdrop-blur-xl border-neutral-700/50'
       }
     } else {
       switch (glassEffect) {
         case 'translucent':
-          return 'bg-white/95 backdrop-blur-md'
+          return 'bg-white/90 backdrop-blur-xl border-white/50'
         case 'transparent':
-          return 'bg-white/80'
+          return 'bg-white/70 backdrop-blur-lg border-white/30'
         case 'opaque':
-          return 'bg-white'
+          return 'bg-white border-gray-200'
         default:
-          return 'bg-white/95 backdrop-blur-md'
+          return 'bg-white/90 backdrop-blur-xl border-white/50'
       }
     }
   }
@@ -110,7 +112,11 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className={`ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 ${
+              isDarkTheme 
+                ? 'text-white hover:bg-gray-700/50' 
+                : 'text-black hover:bg-gray-100/50'
+            }`}
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -148,10 +154,26 @@ function DialogTitle({
   className,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  // Safe theme hook usage with fallback
+  let theme = 'light';
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+  } catch (error) {
+    console.warn('Theme context not available in DialogTitle component, using fallback values');
+  }
+  
+  const isDarkTheme = theme === 'dark';
+  
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-none font-semibold', className)}
+      className={cn(
+        'text-lg leading-none font-semibold',
+        isDarkTheme ? 'text-white' : 'text-black',
+        className
+      )}
       {...props}
     />
   )
@@ -161,10 +183,26 @@ function DialogDescription({
   className,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  // Safe theme hook usage with fallback
+  let theme = 'light';
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+  } catch (error) {
+    console.warn('Theme context not available in DialogDescription component, using fallback values');
+  }
+  
+  const isDarkTheme = theme === 'dark';
+  
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn(
+        'text-sm',
+        isDarkTheme ? 'text-gray-300' : 'text-gray-600',
+        className
+      )}
       {...props}
     />
   )

@@ -3,7 +3,14 @@ import { redirect } from "next/navigation"
 import { MessagesInterface } from "@/components/messages/messages-interface"
 import { AppProviders } from "@/components/providers/app-providers"
 
-export default async function MessagesPage() {
+interface MessagesPageProps {
+  searchParams: {
+    chat?: string
+    group?: string
+  }
+}
+
+export default async function MessagesPage({ searchParams }: MessagesPageProps) {
   try {
     const supabase = await createClient()
     
@@ -41,7 +48,12 @@ export default async function MessagesPage() {
 
     return (
       <AppProviders user={user} profile={profile}>
-        <MessagesInterface user={user} profile={profile} />
+        <MessagesInterface 
+          user={user} 
+          profile={profile} 
+          initialChatId={searchParams.chat}
+          initialGroupId={searchParams.group}
+        />
       </AppProviders>
     )
   } catch (error) {

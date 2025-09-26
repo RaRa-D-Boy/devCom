@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ChatRoom } from "@/components/chat/chat-room"
+import { AppProviders } from "@/components/providers/app-providers"
 
 interface ChatPageProps {
   params: {
@@ -41,10 +42,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
   }
 
   return (
-    <ChatRoom 
-      user={user} 
-      profile={profile} 
-      otherUser={otherUser}
-    />
+    <AppProviders user={user} profile={profile}>
+      <ChatRoom 
+        user={user} 
+        profile={profile} 
+        otherUser={otherUser}
+      />
+    </AppProviders>
   )
 }
